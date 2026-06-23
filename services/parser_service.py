@@ -1,5 +1,6 @@
 from services.pdf_service import extract_text_and_links_from_pdf
 from utils.link_utils import categorize_links, extract_urls
+from services.profile_service import process_profiles
 
 
 def process_resume(uid: str, url: str):
@@ -21,4 +22,10 @@ def process_resume(uid: str, url: str):
 
     profiles = categorize_links(text, all_links)
 
-    return {"UID": uid, **profiles}
+    stats = process_profiles(profiles)
+
+    return {
+        "UID": uid,
+        **profiles,
+        **stats
+    }
