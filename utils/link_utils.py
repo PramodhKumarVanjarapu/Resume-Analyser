@@ -56,21 +56,22 @@ def categorize_links(text: str, urls: list):
         "hackerrank": ""
     }
 
+    INVALID_WORDS = ["solved", "problem", "rating", "contest"]
+
     for url in urls:
         url = url.split("|")[0].strip()
 
+        if any(word in url.lower() for word in INVALID_WORDS):
+            continue
+
         if validate_github(url):
             profiles["github"] = url
-
         elif validate_leetcode(url):
             profiles["leetcode"] = url
-
         elif validate_codeforces(url):
             profiles["codeforces"] = url
-
         elif validate_codechef(url):
             profiles["codechef"] = url
-
         elif validate_hackerrank(url):
             profiles["hackerrank"] = url
 
