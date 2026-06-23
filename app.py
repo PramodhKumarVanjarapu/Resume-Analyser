@@ -20,7 +20,7 @@ if st.button("Process"):
         st.stop()
 
     try:
-        df = pd.read_csv(BytesIO(input_text.encode()))
+        df = pd.read_csv(BytesIO(input_text.encode()),sep="\t",names=["UID", "resume_link"] )
     except Exception:
         st.error("Invalid CSV format")
         st.stop()
