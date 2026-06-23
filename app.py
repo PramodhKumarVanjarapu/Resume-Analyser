@@ -1,49 +1,61 @@
 import streamlit as st
 import pandas as pd
 from io import BytesIO
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 from services.parser_service import process_resume
 
-st.set_page_config(page_title="DSA Profile Extractor")
+st.title("DSA Resume Extractor")
 
-st.title("Resume DSA Profile Extractor")
-
-st.write("Paste CSV with UID and resume_link")
-
-input_text = st.text_area(
-    "Input CSV",
-    placeholder="UID,resume_link\n1,https://example.com/resume.pdf"
-)
+input_text = st.text_area("Paste UID and Resume Links (tab separated)")
 
 if st.button("Process"):
     if not input_text.strip():
-        st.error("Please provide input")
+        st.warning("Please provide input")
         st.stop()
 
-    try:
-        df = pd.read_csv(BytesIO(input_text.encode()),sep="\t",names=["UID", "resume_link"] )
-    except Exception:
-        st.error("Invalid CSV format")
-        st.stop()
+    df = pd.read_csv(
+        BytesIO(input_text.encode()),
+        sep="\t",
+        names=["UID", "resume_link"]
+    )
 
+    total = len(df)
     results = []
 
-    progress = st.progress(0)
+    progress_bar = st.progress(0)
+    status_text = st.empty()
+    output_placeholder = st.empty()
 
-    for i, row in df.iterrows():
-        result = process_resume(row["UID"], row["resume_link"])
-        results.append(result)
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        futures = []
 
-        progress.progress((i + 1) / len(df))
+        for _, row in df.iterrows():
+            futures.append(
+                executor.submit(process_resume, row["UID"], row["resume_link"])
+            )
 
-    output_df = pd.DataFrame(results)
+        for i, future in enumerate(as_completed(futures)):
+            result = future.result()
+            results.append(result)
 
-    st.success("Done")
-    st.dataframe(output_df)
 
-    csv = output_df.to_csv(index=False).encode()
+            progress = (i + 1) / total
+            progress_bar.progress(progress)
+            status_text.text(f"Processed {i+1} / {total}")
+
+            
+            df_output = pd.DataFrame(results)
+            output_placeholder.dataframe(df_output)
+
+
+    df_output = pd.DataFrame(results)
+
+    csv = df_output.to_csv(index=False).encode("utf-8")
+
     st.download_button(
         "Download CSV",
         csv,
-        "dsa_profiles.csv",
+        "output.csv",
         "text/csv"
     )

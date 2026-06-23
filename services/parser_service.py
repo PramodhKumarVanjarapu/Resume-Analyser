@@ -14,14 +14,15 @@ def process_resume(uid: str, url: str):
             "codeforces": "",
             "codechef": "",
             "hackerrank": "",
+            "leetcode_solved": 0,
+            "codeforces_solved": 0,
+            "codechef_solved": 0
         }
 
     text_links = extract_urls(text)
-
     all_links = list(set(text_links + clickable_links))
 
     profiles = categorize_links(text, all_links)
-
     stats = process_profiles(profiles)
 
     return {
